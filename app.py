@@ -1,6 +1,8 @@
 # --- START OF FILE app.py ---
 
 import streamlit as st
+from jinja2 import Environment, FileSystemLoader
+from weasyprint import HTML # Correctly import the HTML class
 import datetime
 import io
 import os
@@ -9,11 +11,6 @@ import base64
 from urllib.parse import quote
 import re
 import tempfile
-
-# MODIFIED: Import PyPDF2 and reportlab components
-from PyPDF2 import PdfReader, PdfWriter
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
 
 # Platform-specific import for Windows COM initialization and Outlook control
 if sys.platform == 'win32':
@@ -86,115 +83,40 @@ def clear_form():
     if 'preview_visible' in st.session_state: st.session_state.preview_visible = False
     st.success("✨ Form cleared successfully!")
 
-
-# --- NEW PDF GENERATION FUNCTION ---
+# --- PDF GENERATION FUNCTION (Using Jinja2 and WeasyPrint) ---
 def generate_documents():
-    """Generates a PDF by stamping form data onto a template PDF."""
+    """Generates a PDF file from an HTML template and stores its bytes in session_state."""
     try:
-        progress_bar = st.progress(0, text="🔄 Initializing PDF generation...")
-
-        # --- COORDINATES MAPPING ---
-        # Maps keys to (x, y) coordinates on the PDF. Origin (0,0) is bottom-left.
-        # These will need fine-tuning to match your template.pdf perfectly.
-        # A standard Letter page is 612 points wide and 792 points high.
-        CHECKBOX_X_POS = 508
-        coordinates = {
-            # --- Header Info ---
-            'unit_name': (140, 715), 'unit_num': (430, 715),
-            'tenant': (100, 690), 'email': (380, 690),
-            'serial_no': (100, 665), 'date_formatted': (380, 665), # Use formatted date
-            'date_in_sentence': (245, 627),
-            
-            # --- Checkboxes ---
-            # CIVIL & STRUCTURAL (Page 1)
-            'chk_signage_installation': (CHECKBOX_X_POS, 520),
-            'chk_signage_actual_sample': (CHECKBOX_X_POS, 497),
-            'chk_facade_junction_installation': (CHECKBOX_X_POS, 474),
-            'chk_floor_water_proofing_facade_line': (CHECKBOX_X_POS, 451),
-            'chk_floor_water_proofing_wat_area_1st_fix': (CHECKBOX_X_POS, 428),
-            'chk_floor_water_proofing_wat_area_2nd_fix': (CHECKBOX_X_POS, 405),
-            'chk_kitchen_drainage_piping_installation_inspection': (CHECKBOX_X_POS, 382),
-            'chk_kitchen_tiles_and_grout_installation_inspection': (CHECKBOX_X_POS, 359),
-            'chk_releasing_ceiling_closure_inspection': (CHECKBOX_X_POS, 336),
-            'chk_flooring_installation_release': (CHECKBOX_X_POS, 313),
-            'chk_rcp_3rd_fix': (CHECKBOX_X_POS, 290),
-            'chk_mep_final_inspection': (CHECKBOX_X_POS, 267),
-            'chk_ad_shaft_ceiling': (CHECKBOX_X_POS, 244),
-            'chk_facade_isolation': (CHECKBOX_X_POS, 221),
-            'chk_upstand_isolation': (CHECKBOX_X_POS, 198),
-
-            # ELECTRICAL SYSTEMS (Assumed to be on Page 2, adjust if not)
-            # To handle multiple pages, a more complex logic would be needed.
-            # This example assumes a very long single page or that you map to page 2 coords.
-            # Let's assume the template is a single long page for simplicity here.
-            
-            # ELECTRICAL (Lighting & Power)
-            'chk_electrical_1st_fix': (CHECKBOX_X_POS, 140),
-            'chk_electrical_2nd_fix': (CHECKBOX_X_POS, 117),
-            'chk_electrical_3rd_fix': (CHECKBOX_X_POS, 94),
-            'chk_panel_board_installation_termination': (CHECKBOX_X_POS, 71),
-            'chk_electrical_test_commission': (CHECKBOX_X_POS, 48),
-            
-            # This is where coordinates would continue onto a second page
-            # For this example, we'll continue decrementing Y as if it were one long page.
-            # This will require you to create a 2-page template.pdf
-        }
+        progress_bar = st.progress(0, text="🔄 Initializing...")
         
-        # A more complete mapping would be needed for all checkboxes.
-        # This is a representative sample. You can add the rest following the pattern.
-
-        packet = io.BytesIO()
-        c = canvas.Canvas(packet, pagesize=letter)
-        c.setFont("Helvetica", 10)
-
-        progress_bar.progress(30, text="📝 Placing form data on PDF...")
-
-        # Special handling for dates
-        st.session_state['date_formatted'] = st.session_state.inspection_date.strftime("%Y-%m-%d")
-        st.session_state['date_in_sentence'] = st.session_state.inspection_date.strftime("%B %d, %Y")
-
-        # Add text fields
-        for key, (x, y) in coordinates.items():
-            if not key.startswith("chk_") and key in st.session_state:
-                c.drawString(x, y, str(st.session_state[key]))
+        # 1. Set up Jinja2 environment to load the HTML template from the current directory
+        env = Environment(loader=FileSystemLoader('.'))
+        template = env.get_template("template.html")
         
-        # Add checkmarks ("X")
-        c.setFont("Helvetica-Bold", 14)
-        for key, (x, y) in coordinates.items():
-            if key.startswith("chk_") and st.session_state.get(key, False):
-                c.drawString(x, y + 2, "X") # Small offset for better centering
-
-        c.save()
-        packet.seek(0)
+        progress_bar.progress(30, text="📝 Processing form data...")
+        # 2. Prepare the context dictionary for the template
+        context = {key: value for key, value in st.session_state.items()}
+        context['date'] = st.session_state.inspection_date.strftime("%Y-%m-%d")
         
-        progress_bar.progress(60, text=" merging data with template...")
+        # 3. Render the HTML with the context data
+        progress_bar.progress(50, text="📄 Rendering HTML from template...")
+        rendered_html = template.render(context)
         
-        stamp_pdf = PdfReader(packet)
-        with open("template.pdf", "rb") as f:
-            template_pdf = PdfReader(f)
-            writer = PdfWriter()
-            page = template_pdf.pages[0]
-            page.merge_page(stamp_pdf.pages[0])
-            writer.add_page(page)
-            
-            # If your template has more pages, add them back
-            for i in range(1, len(template_pdf.pages)):
-                writer.add_page(template_pdf.pages[i])
-
-            output_buffer = io.BytesIO()
-            writer.write(output_buffer)
-            st.session_state.pdf_bytes = output_buffer.getvalue()
+        # 4. Convert the rendered HTML to PDF using WeasyPrint
+        progress_bar.progress(80, text=" Generating PDF document...")
+        # --- THIS IS THE CORRECTED AND WORKING LINE ---
+        pdf_bytes = HTML(string=rendered_html).write_pdf()
+        
+        st.session_state.pdf_bytes = pdf_bytes
 
         progress_bar.progress(100, text="✅ PDF generated successfully!")
         st.success("🎉 PDF is ready for download!")
-        st.session_state.file_name_base = f"IR_{st.session_state.unit_name.replace(' ', '_')}_{st.session_state.date_formatted}"
+        st.session_state.file_name_base = f"IR_{st.session_state.unit_name.replace(' ', '_')}_{context['date']}"
         st.session_state.preview_visible = False 
         import time; time.sleep(1); progress_bar.empty()
-
-    except FileNotFoundError:
-        st.error("❌ Error: 'template.pdf' not found. Please ensure the template file is in the same directory.")
     except Exception as e:
         st.error(f"❌ An error occurred: {e}")
+        st.warning("⚠️ Please ensure 'template.html' is in the same directory as the app.")
 
 
 def email_with_attachment_local():
@@ -248,7 +170,6 @@ st.markdown('<div class="form-card">', unsafe_allow_html=True)
 st.markdown('<h2 class="section-header">🔍 Inspection Items</h2>', unsafe_allow_html=True)
 st.markdown("**Please select all inspections that apply to your project:**")
 
-# NOTE: The `key` of each checkbox must match a key in the `coordinates` dictionary above.
 with st.expander("🏗️ **CIVIL & STRUCTURAL**", expanded=True):
     c1, c2 = st.columns(2)
     with c1:
@@ -290,8 +211,68 @@ with st.expander("⚡ **ELECTRICAL SYSTEMS**", expanded=False):
         st.checkbox("🔬 Test & commission (Fire Alarm)", key="chk_fire_alarm_test_commission")
         st.checkbox("🔗 Interface with Mall (Fire Alarm)", key="chk_interface_with_mall")
 
-# ... (The rest of your expanders and checkboxes go here. Ensure each has a unique 'key') ...
-# You will need to add the coordinates for these keys in the `generate_documents` function.
+with st.expander("🔥 **FIRE PROTECTION SYSTEMS**", expanded=False):
+    st.markdown('<p class="category-header">🚒 Firefighting Pipe Work</p>', unsafe_allow_html=True)
+    c1, c2 = st.columns(2)
+    with c1:
+        st.checkbox("🔧 Installation for F.F pipe work (with coating)", key="chk_ff_pipe_work_installation_with_coating")
+        st.checkbox("💪 Pressure test for F.F @16 bar for 4 H", key="chk_ff_pressure_test_16bar_4h")
+        st.checkbox("💧 Drops installation for sprinklers", key="chk_ff_drops_installation_for_sprinklers")
+        st.checkbox("🌊 Flushing for F.F network", key="chk_ff_flushing_network")
+    with c2:
+        st.checkbox("🚿 Sprinkler installation", key="chk_ff_sprinkler_installation")
+        st.checkbox("🔗 Connecting with Mall Tie-in & Opening Valve", key="chk_ff_connecting_with_mall_tie_in_opening_valve")
+        st.checkbox("🍳 Hood wet chemical system (F&B)", key="chk_hood_wet_chemical_system_fnb")
+        st.checkbox("🧯 FM200 & CO2 systems, fire extinguishers, etc.", key="chk_fm200_co2_systems_fire_extinguishers_fire_search")
+
+with st.expander("❄️ **HVAC SYSTEMS**", expanded=False):
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown('<p class="category-header">🌪️ HVAC Duct Work</p>', unsafe_allow_html=True)
+        st.checkbox("🔧 Installation for duct work, Dampers & FCU", key="chk_hvac_duct_installation_dampers_fcu")
+        st.checkbox("💡 Light or smoke test for duct work", key="chk_hvac_duct_light_smoke_test")
+        st.checkbox("🛡️ Insulation for duct work & VD", key="chk_hvac_duct_insulation")
+        st.checkbox("3️⃣ Installation of 3rd fix for duct work", key="chk_hvac_duct_installation_3rd_fix")
+        st.checkbox("🌬️ Volume dumper, Grill, diffusers", key="chk_hvac_duct_volume_dumper_grill_diffusers")
+        st.checkbox("🔄 Air outlet installation", key="chk_hvac_duct_air_outlet_installation")
+        st.checkbox("🔬 Test & commission (HVAC Duct)", key="chk_hvac_duct_test_commission")
+        st.checkbox("📋 Test & Balance certificate", key="chk_hvac_duct_test_balance_certificate")
+    with c2:
+        st.markdown('<p class="category-header">🧊 HVAC Chilled Pipe</p>', unsafe_allow_html=True)
+        st.checkbox("🔧 Installation of chilling pipes with coating", key="chk_hvac_chilled_pipe_installation_with_coating")
+        st.checkbox("💪 Pressure test for chilled water @12 bar for 4 H", key="chk_hvac_chilled_pipe_pressure_test_12bar_4h")
+        st.checkbox("🔗 Installation for hook-up", key="chk_hvac_chilled_pipe_installation_for_hook_up")
+        st.checkbox("🧪 Chemical treatment for chilled water", key="chk_hvac_chilled_pipe_chemical_treatment")
+        st.checkbox("🛡️ Insulation for all pipes & hook-up", key="chk_hvac_chilled_pipe_insulation_all_pipes_hook_up")
+        st.checkbox("🔗 Connecting with Mall Tie-in & Opening Valve", key="chk_hvac_chilled_pipe_connecting_with_mall_tie_in_opening_valve")
+
+with st.expander("🚿 **PLUMBING SYSTEMS**", expanded=False):
+    c1, c2 = st.columns(2)
+    with c1:
+        st.checkbox("🔧 Installation of drainage pipes", key="chk_plumbing_drainage_pipes_installation")
+        st.checkbox("💧 Water test for drainage pipes", key="chk_plumbing_drainage_pipes_water_test")
+        st.checkbox("🛡️ Network protection before & after civil work", key="chk_plumbing_network_protection_before_after_civil_work")
+        st.checkbox("3️⃣ 3rd fix (valves & plumbing fixtures)", key="chk_plumbing_3rd_fix_valves_fixtures")
+        st.checkbox("❄️ Installation of A.C drainpipes", key="chk_plumbing_ac_drainpipes_installation")
+        st.checkbox("💧 Water test for A.C drainpipes 16 bar for 4H", key="chk_plumbing_ac_drainpipes_water_test_16bar_4h")
+    with c2:
+        st.checkbox("🚰 Installation of water supply pipes", key="chk_plumbing_water_supply_pipes_installation")
+        st.checkbox("💪 Pressure test for water supply pipes 16 bar for 4H", key="chk_plumbing_water_supply_pipes_pressure_test_16bar_4h")
+        st.checkbox("🔧 Installation for drainage pipes (re-test)", key="chk_plumbing_drainage_pipes_re_installation")
+        st.checkbox("💧 Water test for drainage pipes (re-test)", key="chk_plumbing_drainage_pipes_re_water_test")
+        st.checkbox("🚽 Installation for flush tank - toilets only", key="chk_plumbing_flush_tank_toilets_only_installation")
+        st.checkbox("🔥 Installation for EWH", key="chk_plumbing_ewh_installation")
+
+with st.expander("📜 **CERTIFICATES REQUIRED**", expanded=False):
+    c1, c2 = st.columns(2)
+    with c1:
+        st.checkbox("🧪 Chemical treatment flushing for chilled water", key="chk_certificate_chemical_treatment_flushing_chilled_water")
+        st.checkbox("📊 Test & balance report for HVAC system (air & water)", key="chk_certificate_test_balance_report_hvac_air_water")
+        st.checkbox("⚡ Panel board test certificated", key="chk_certificate_panel_board_test")
+    with c2:
+        st.checkbox("🚨 Fire alarm certificate", key="chk_certificate_fire_alarm")
+        st.checkbox("🚿 Plumbing pipes certificate", key="chk_certificate_plumbing_pipes")
+        st.checkbox("🧯 Hood fire suppression system MEP Testing sign-off", key="chk_certificate_hood_fire_suppression_system_mep_testing_sign_off_energization_commissioning")
 
 st.markdown('</div>', unsafe_allow_html=True)
 st.markdown("---")
