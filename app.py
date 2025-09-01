@@ -12,7 +12,6 @@ import base64
 from urllib.parse import quote
 import re
 import tempfile
-
 # Platform-specific import for Windows COM initialization and Outlook control
 # This section remains unchanged and will be ignored on Streamlit Cloud (Linux)
 if sys.platform == 'win32':
@@ -121,7 +120,10 @@ def generate_documents():
         
         # 4. Convert the rendered HTML to PDF using WeasyPrint
         progress_bar.progress(80, text=" Generating PDF document...")
+        
+        # THIS IS THE CORRECTED LINE:
         pdf_bytes = HTML(string=rendered_html).write_pdf()
+        
         st.session_state.pdf_bytes = pdf_bytes
 
         progress_bar.progress(100, text="✅ PDF generated successfully!")
