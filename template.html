@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tenant Contractor Inspection request - IR</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 25px;
+            border: 1px solid #ccc;
+        }
+
+        .logo {
+            margin-bottom: 20px;
+        }
+
+        .logo .park-st {
+            font-size: 28px;
+            font-weight: bold;
+            color: #89c5cc;
+        }
+
+        .logo .east {
+            font-size: 28px;
+            font-weight: normal;
+            color: #a9a9a9;
+        }
+
+        .logo .tagline {
+            font-size: 12px;
+            color: #888;
+            margin-left: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid black;
+            margin-bottom: 20px;
+        }
+
+        td {
+            border: 1px solid black;
+            padding: 8px;
+            vertical-align: middle;
+        }
+        
+        .header-row td, .section-title td {
+            font-weight: bold;
+        }
+        
+        .bg-peach {
+            background-color: #fff0e6;
+        }
+        
+        .bg-teal {
+            background-color: #e0f7fa;
+        }
+
+        .instructions {
+            margin: 20px 0;
+            font-size: 11pt;
+        }
+        
+        .request-line {
+            position: relative;
+        }
+
+        .request-checkbox {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            border: 1px solid black;
+        }
+
+        .instructions ul {
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+
+        .instructions ul li {
+            margin-bottom: 5px;
+        }
+        
+        .checkbox-cell {
+            width: 120px;
+            text-align: center;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            pointer-events: none; /* Makes checkbox non-interactive as this is for display */
+        }
+        
+        .approval-section {
+            margin-top: 30px;
+            font-size: 11pt;
+        }
+        
+        .approval-grid {
+             display: flex;
+             justify-content: space-around;
+             margin-bottom: 15px;
+        }
+        
+        .approval-grid div {
+            font-weight: bold;
+        }
+        
+        .approval-grid span {
+            font-weight: normal;
+            margin-left: 15px;
+            font-size: 14pt;
+        }
+        
+        .comments-box {
+            border: 1px solid #000;
+            padding: 10px;
+            height: 150px;
+            margin-top: 5px;
+        }
+        
+        .comments-box p {
+            margin:0;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11pt;
+        }
+
+        .signature-line {
+            border-bottom: 1px dotted #333;
+            min-width: 200px;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <div class="logo">
+            <span class="park-st">Park St.</span><span class="east">East</span>
+            <span class="tagline">Workday. Nightlife</span>
+        </div>
+
+        <table>
+            <tr class="header-row bg-peach">
+                <td style="width: 25%;"><strong>Form NO: 7</strong></td>
+                <td colspan="3"><strong>Tenant Contractor Inspection request -IR</strong></td>
+            </tr>
+            <tr>
+                <td class="bg-teal">External document</td>
+                <td style="width: 40%;"><strong>Unit Name:</strong> {{unit_name}}</td>
+                <td colspan="2"><strong>Unit Number:</strong> {{unit_num}}</td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>Tenant/TAR:</strong> {{tenant}}</td>
+                <td colspan="2"><strong>Email:</strong> {{email}}</td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>SER NO#:</strong> {{serial_no}}</td>
+                <td colspan="2"><strong>Date:</strong> {{date}}</td>
+            </tr>
+        </table>
+
+        <div class="instructions">
+            <p class="request-line">
+                We request that the Retail Design and Delivery team attend site on <strong>{{date}}</strong> to conduct the following inspection(s):
+                <span class="request-checkbox"></span>
+            </p>
+            <ul>
+                <li>*Please note that three (3) days’ notice is to be given for any inspection request.</li>
+                <li>Any IR must be attached with an indicative sketch -PDF for the requested activities from the approved drawings.</li>
+                <li>Any changes to the approved design won’t be approved.</li>
+            </ul>
+        </div>
+        
+        <table>
+            <tr class="section-title bg-peach">
+                <td colspan="2"><strong>Please tick as appropriate</strong></td>
+            </tr>
+            <tr class="section-title bg-teal">
+                <td colspan="2"><strong>Civil</strong></td>
+            </tr>
+            <tr>
+                <td>Signage installation</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_signage_installation %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Signage actual sample</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_signage_actual_sample %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Facade junction installation</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_facade_junction_installation %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Floor water proofing -façade line</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_floor_water_proofing_facade_line %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Floor water proofing -wat area 1st fix @ 60 cm height for raiser.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_floor_water_proofing_wat_area_1st_fix %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Floor water proofing -wat area 2nd fix</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_floor_water_proofing_wat_area_2nd_fix %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Kitchen drainage piping installation inspection</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_kitchen_drainage_piping_installation_inspection %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Kitchen tiles and grout installation inspection</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_kitchen_tiles_and_grout_installation_inspection %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Releasing Ceiling closure inspection-ceiling release.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_releasing_ceiling_closure_inspection %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Flooring installation-flooring release</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_flooring_installation_release %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>RCP -3rd fix</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_rcp_3rd_fix %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>MEP final inspection</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_mep_final_inspection %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>AD -shaft & ceiling</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_ad_shaft_ceiling %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Façade isolation.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_facade_isolation %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Upstand isolation.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_upstand_isolation %}checked{% endif %}></td>
+            </tr>
+            <tr class="section-title bg-teal">
+                <td colspan="2"><strong>Electrical (Lighting & Power)</strong></td>
+            </tr>
+            <tr>
+                <td>1st fix</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_electrical_1st_fix %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>2nd fix</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_electrical_2nd_fix %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>3rd fix</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_electrical_3rd_fix %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Panel board installation & Termination</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_panel_board_installation_termination %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Test & commission</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_electrical_test_commission %}checked{% endif %}></td>
+            </tr>
+            <tr class="section-title bg-teal">
+                <td colspan="2"><strong>LIGHT Current (Data, Telephone, Access, Sound, CCTV)</strong></td>
+            </tr>
+            <tr>
+                <td>1st fix</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_light_current_1st_fix %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>2nd fix</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_light_current_2nd_fix %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>3rd fix</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_light_current_3rd_fix %}checked{% endif %}></td>
+            </tr>
+            <tr class="section-title bg-teal">
+                <td colspan="2"><strong>Fire Alarm</strong></td>
+            </tr>
+            <tr>
+                <td>First fix</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_fire_alarm_first_fix %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Second fix</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_fire_alarm_second_fix %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Third fix</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_fire_alarm_third_fix %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Test & commission</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_fire_alarm_test_commission %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>interface will Mall</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_interface_with_mall %}checked{% endif %}></td>
+            </tr>
+             <tr class="section-title bg-teal">
+                <td colspan="2"><strong>FIREFIGHTING PIPE WORK</strong></td>
+            </tr>
+            <tr>
+                <td>Instillation for F.F pipe work (with coating).</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_ff_pipe_work_installation_with_coating %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>pressure test for F.F @16 bar for 4 H</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_ff_pressure_test_16bar_4h %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>drops installation for sprinklers.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_ff_drops_installation_for_sprinklers %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>flushing for F.F network.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_ff_flushing_network %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>sprinkler installation.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_ff_sprinkler_installation %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>connecting with Mall Tie-in & Opening Valve</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_ff_connecting_with_mall_tie_in_opening_valve %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Hood wet chemical system (F&B)</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_hood_wet_chemical_system_fnb %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>FM200 & CO2 systems, Fire extinguishers, fire search (if any)</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_fm200_co2_systems_fire_extinguishers_fire_search %}checked{% endif %}></td>
+            </tr>
+             <tr class="section-title bg-teal">
+                <td colspan="2"><strong>HVAC DUCT</strong></td>
+            </tr>
+            <tr>
+                <td>Instillation for duct work, Dampers & FCU</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_hvac_duct_installation_dampers_fcu %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>light or smoke test for duct work.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_hvac_duct_light_smoke_test %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>insulation for duct work & VD.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_hvac_duct_insulation %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>installation of 3rd fix for duct work.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_hvac_duct_installation_3rd_fix %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Volume dumper,Grill,diffusers.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_hvac_duct_volume_dumper_grill_diffusers %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>air outlet installation</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_hvac_duct_air_outlet_installation %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Test & commission</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_hvac_duct_test_commission %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Test & Ballance certificate</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_hvac_duct_test_balance_certificate %}checked{% endif %}></td>
+            </tr>
+             <tr class="section-title bg-teal">
+                <td colspan="2"><strong>HVAC CHILLED PIPE DUCT</strong></td>
+            </tr>
+            <tr>
+                <td>Instillation of chilling pipes with coating.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_hvac_chilled_pipe_installation_with_coating %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>pressure test for chilled water@12 bar for 4 H.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_hvac_chilled_pipe_pressure_test_12bar_4h %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>installation for hook-up</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_hvac_chilled_pipe_installation_for_hook_up %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>chemical treatment for chilled water</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_hvac_chilled_pipe_chemical_treatment %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Insulation for all pipes & hook-up</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_hvac_chilled_pipe_insulation_all_pipes_hook_up %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>connecting with Mall Tie-in & Opening Valve</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_hvac_chilled_pipe_connecting_with_mall_tie_in_opening_valve %}checked{% endif %}></td>
+            </tr>
+             <tr class="section-title bg-teal">
+                <td colspan="2"><strong>PLUMBING WORK</strong></td>
+            </tr>
+            <tr>
+                <td>Installation of drainage pipes</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_plumbing_drainage_pipes_installation %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Water test for drainage pipes</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_plumbing_drainage_pipes_water_test %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Network protection before & after civil work.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_plumbing_network_protection_before_after_civil_work %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>3rd fix (valves & plumbing fixtures)</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_plumbing_3rd_fix_valves_fixtures %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Installation of A.C drainpipes</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_plumbing_ac_drainpipes_installation %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Water test for A.C drainpipes 16 bar for 4 H Before connecting with tie-in valve</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_plumbing_ac_drainpipes_water_test_16bar_4h %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Installation of water supply pipes</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_plumbing_water_supply_pipes_installation %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Pressure test for water supply pipes 16 bar for 4 H Before connecting with tie-in valve</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_plumbing_water_supply_pipes_pressure_test_16bar_4h %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Installation for drainage pipes</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_plumbing_drainage_pipes_re_installation %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Water test for drainage pipes</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_plumbing_drainage_pipes_re_water_test %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Installation for flush tank -toilets only</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_plumbing_flush_tank_toilets_only_installation %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Installation for EWH</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_plumbing_ewh_installation %}checked{% endif %}></td>
+            </tr>
+             <tr class="section-title bg-teal">
+                <td colspan="2"><strong>CERTIFICATE REQUIRED</strong></td>
+            </tr>
+            <tr>
+                <td>Chemical treatment flushing for chilled water.by the approved vendor from Mall.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_certificate_chemical_treatment_flushing_chilled_water %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Test & balance report for HVAC system (air & water)</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_certificate_test_balance_report_hvac_air_water %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Panel board test certificated.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_certificate_panel_board_test %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Fire alarm certificate.</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_certificate_fire_alarm %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Pluming pipes certificate</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_certificate_plumbing_pipes %}checked{% endif %}></td>
+            </tr>
+            <tr>
+                <td>Hood fire suppression system MEP Testing, sign-off, energization, commissioning</td>
+                <td class="checkbox-cell"><input type="checkbox" {% if chk_certificate_hood_fire_suppression_system_mep_testing_sign_off_energization_commissioning %}checked{% endif %}></td>
+            </tr>
+        </table>
+        
+        <div class="approval-section">
+            <div class="approval-grid">
+                <div>Approved <span>A</span></div>
+                <div>Approved as noted <span>B</span></div>
+                <div>Not approved <span>C</span></div>
+            </div>
+            <div class="comments-section">
+                <p><strong>Comments:</strong></p>
+                <div class="comments-box">
+                    <p>&nbsp;</p> <!-- Placeholder for multiline content -->
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div>RDD Team: <span class="signature-line"></span></div>
+            <div>MEP -Consultant: <span class="signature-line"></span></div>
+            <div>Date: <span class="signature-line"></span></div>
+        </div>
+
+    </div>
+</body>
+</html>
