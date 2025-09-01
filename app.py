@@ -1,7 +1,6 @@
 # --- START OF FILE app.py ---
 
 import streamlit as st
-# MODIFIED: Removed DocxTemplate, RichText, convert. Added Jinja2 and WeasyPrint.
 from jinja2 import Environment, FileSystemLoader
 from weasyprint import HTML
 import datetime
@@ -12,8 +11,8 @@ import base64
 from urllib.parse import quote
 import re
 import tempfile
+
 # Platform-specific import for Windows COM initialization and Outlook control
-# This section remains unchanged and will be ignored on Streamlit Cloud (Linux)
 if sys.platform == 'win32':
     import pythoncom
     import win32com.client as win32
@@ -21,7 +20,6 @@ if sys.platform == 'win32':
 # --- CUSTOM CSS STYLES ---
 def load_custom_css():
     """Apply modern custom styling to the Streamlit app"""
-    # This function is unchanged. The CSS is excellent.
     st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -54,31 +52,18 @@ def load_custom_css():
         background: linear-gradient(90deg, rgba(102, 126, 234, 0.1), transparent);
         border-radius: 0 10px 10px 0;
     }
-
-    /* --- NEW: Styles for the INLINE PDF viewer --- */
     .pdf-viewer-container {
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        padding: 1rem;
-        margin-top: 1.5rem;
-        background-color: #f9f9f9;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border: 1px solid #ddd; border-radius: 10px; padding: 1rem; margin-top: 1.5rem;
+        background-color: #f9f9f9; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
     .pdf-iframe {
-        width: 100%;
-        height: 800px; /* A fixed height is good for inline display */
-        border: none;
-        border-radius: 5px;
+        width: 100%; height: 800px; border: none; border-radius: 5px;
     }
-    
-    /* Hide Streamlit branding */
     .stDeployButton {display:none;} footer {visibility: hidden;} .stApp > header {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
 # --- Helper Functions ---
-# REMOVED: The create_checkbox_rt function is no longer needed. Jinja2 handles booleans directly.
-
 def sanitize_filename(name):
     """Removes characters that are invalid in Windows filenames."""
     return re.sub(r'[<>:"/\\|?*]', '_', name)
@@ -94,42 +79,33 @@ def clear_form():
     for key in st.session_state.keys():
         if key.startswith("chk_"): st.session_state[key] = False
     
-    # MODIFIED: Removed docx_bytes from cleanup
     if 'pdf_bytes' in st.session_state: del st.session_state.pdf_bytes
     if 'preview_visible' in st.session_state: st.session_state.preview_visible = False
     st.success("✨ Form cleared successfully!")
 
-# MODIFIED: This is the new document generation function
 def generate_documents():
     """Generates a PDF file from an HTML template and stores its bytes in session_state."""
     try:
         progress_bar = st.progress(0, text="🔄 Initializing...")
         
-        # 1. Set up Jinja2 environment to load the HTML template
         env = Environment(loader=FileSystemLoader('.'))
         template = env.get_template("template.html")
         
         progress_bar.progress(30, text="📝 Processing form data...")
-        # 2. Prepare the context dictionary for the template
         context = {key: value for key, value in st.session_state.items()}
         context['date'] = st.session_state.inspection_date.strftime("%Y-%m-%d")
         
-        # 3. Render the HTML with the context data
         progress_bar.progress(50, text="📄 Rendering HTML from template...")
         rendered_html = template.render(context)
         
-        # 4. Convert the rendered HTML to PDF using WeasyPrint
         progress_bar.progress(80, text=" Generating PDF document...")
-        
-        # THIS IS THE CORRECTED LINE:
-        pdf_bytes = HTML(string=rendered_html).write_pdf()
-        
+        pdf_bytes = HTML(string=rendered_html).write_pdf() # CORRECTED LINE
         st.session_state.pdf_bytes = pdf_bytes
 
         progress_bar.progress(100, text="✅ PDF generated successfully!")
         st.success("🎉 PDF is ready for download!")
         st.session_state.file_name_base = f"IR_{st.session_state.unit_name.replace(' ', '_')}_{context['date']}"
-        st.session_state.preview_visible = False # Hide preview on re-generation
+        st.session_state.preview_visible = False 
         import time; time.sleep(1); progress_bar.empty()
     except Exception as e:
         st.error(f"❌ An error occurred: {e}")
@@ -141,13 +117,11 @@ def email_with_attachment_local():
     Saves the PDF to a temporary file and opens Outlook with the file attached.
     WARNING: This ONLY works when running the script on a local Windows machine.
     """
-    # This function is unchanged. It's correctly guarded for Windows-only execution.
     if sys.platform != 'win32':
         st.error("This feature is only available on Windows.")
         return
 
     try:
-        # Create a temporary file to hold the PDF data
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             tmp.write(st.session_state.pdf_bytes)
             attachment_path = tmp.name
@@ -155,7 +129,6 @@ def email_with_attachment_local():
         pythoncom.CoInitialize()
         outlook = win32.Dispatch('outlook.application')
         mail = outlook.CreateItem(0)
-
         mail.To = st.session_state.email_to
         mail.Subject = st.session_state.email_subject
         mail.Body = st.session_state.email_body
@@ -167,18 +140,15 @@ def email_with_attachment_local():
         
         mail.Display(True)
         st.success("Outlook email created with attachment!")
-
     except Exception as e:
         st.error(f"Failed to create Outlook email: {e}")
         st.warning("Ensure Outlook is installed and you have `pywin32` library (`pip install pywin32`).")
     finally:
-        # Clean up the temporary file
         if 'attachment_path' in locals() and os.path.exists(attachment_path):
             os.unlink(attachment_path)
 
 
 # --- MAIN APPLICATION ---
-# This entire section remains the same, as it defines the user interface.
 st.set_page_config(layout="wide", page_title="Inspection Request Form", page_icon="📋")
 load_custom_css()
 st.markdown('<h1 class="main-title">📋 Kenda Park St. Inspection Request Form</h1>', unsafe_allow_html=True)
@@ -188,17 +158,16 @@ st.markdown('<div class="form-card">', unsafe_allow_html=True)
 st.markdown('<h2 class="section-header">🏢 Unit and Tenant Information</h2>', unsafe_allow_html=True)
 col1, col2 = st.columns(2)
 with col1:
-    st.text_input("🏪 Unit Name", "Kenda", key="unit_name", help="Enter the name of the business unit")
-    st.text_input("🔢 Unit Number", "BS-03", key="unit_num", help="Building and unit identifier")
-    st.text_input("👤 Tenant/TAR", "", key="tenant", help="Tenant or Tenant Authorized Representative")
+    st.text_input("🏪 Unit Name", "Kenda", key="unit_name")
+    st.text_input("🔢 Unit Number", "BS-03", key="unit_num")
+    st.text_input("👤 Tenant/TAR", "", key="tenant")
 with col2:
-    st.text_input("📄 Serial Number", "IR-MEP-MEC-001", key="serial_no", help="Unique inspection request identifier")
-    st.date_input("📅 Inspection Date", datetime.date.today(), key="inspection_date", help="Preferred inspection date")
-    st.text_input("📧 Email", "marwa_sanadily@parkst-eg.com", key="email", help="Contact email for notifications")
+    st.text_input("📄 Serial Number", "IR-MEP-MEC-001", key="serial_no")
+    st.date_input("📅 Inspection Date", datetime.date.today(), key="inspection_date")
+    st.text_input("📧 Email", "marwa_sanadily@parkst-eg.com", key="email")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Inspection Items Section ---
-# This entire section is unchanged.
 st.markdown('<div class="form-card">', unsafe_allow_html=True)
 st.markdown('<h2 class="section-header">🔍 Inspection Items</h2>', unsafe_allow_html=True)
 st.markdown("**Please select all inspections that apply to your project:**")
@@ -314,7 +283,6 @@ st.markdown("---")
 st.markdown('<h2 class="section-header">🎯 Actions</h2>', unsafe_allow_html=True)
 btn_col1, btn_col2, _ = st.columns([3, 3, 6])
 with btn_col1:
-    # MODIFIED: Changed label to reflect PDF-only output
     st.button("🚀 Generate PDF Document", on_click=generate_documents, type="primary", use_container_width=True)
 with btn_col2:
     st.button("🗑️ Clear Form", on_click=clear_form, type="secondary", use_container_width=True)
@@ -324,7 +292,6 @@ if 'pdf_bytes' in st.session_state:
     st.markdown("---")
     st.markdown('<h2 class="section-header">📥 Download & Share</h2>', unsafe_allow_html=True)
     
-    # MODIFIED: Removed the DOCX download button and adjusted columns
     dl_col1, dl_col2 = st.columns(2)
     with dl_col1:
         st.download_button(label="📄 Download PDF (.pdf)", data=st.session_state.pdf_bytes,
@@ -337,7 +304,6 @@ if 'pdf_bytes' in st.session_state:
         preview_text = "🔼 Hide Preview" if st.session_state.get('preview_visible', False) else "👁️ Show Inline Preview"
         st.button(preview_text, on_click=toggle_preview, use_container_width=True)
     
-    # This expander is unchanged and will work perfectly.
     with st.expander("📧 Email Documents via Outlook"):
         st.text_input("Recipient's Email", st.session_state.get('email', ''), key="email_to")
         st.text_input("Subject", f"Inspection Request: {st.session_state.unit_name} - {st.session_state.serial_no}", key="email_subject")
@@ -355,7 +321,6 @@ if 'pdf_bytes' in st.session_state:
                 st.caption("Requires local Windows & Outlook.")
 
 # --- INLINE PDF PREVIEW ---
-# This section is unchanged and works perfectly with the new PDF generation method.
 if st.session_state.get('preview_visible', False) and 'pdf_bytes' in st.session_state:
     base64_pdf = base64.b64encode(st.session_state.pdf_bytes).decode('utf-8')
     
